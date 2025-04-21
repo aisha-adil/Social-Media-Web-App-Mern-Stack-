@@ -1,0 +1,45 @@
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  mongo-data:
+
+services:
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: always
+    ports:
+      - "${MONGO_PORT}:${MONGO_PORT}"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - default
+  
+  backend:
+    build: ./Server
+    container_name: server
+    restart: always
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    depends_on:
+      - mongo
+    networks:
+      - default
+    environment: 
+      - dbURL=mongodb://mongo:${MONGO_PORT}/${DB_NAME}
+      - dbName=${DB_NAME}
+
+  frontend:
+    build:
+      context: ./Client
+    container_name: client
+    restart: always
+    ports:
+      - "${FRONTEND_PORT}:80"
+    depends_on:
+      - backend
+    networks:
+      - default
